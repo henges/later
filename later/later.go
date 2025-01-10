@@ -104,12 +104,16 @@ func (l *Later) FireDueReminders(now time.Time) error {
 		if l.cb != nil {
 			l.cb(r.Reminder)
 		}
-		err = l.db.DeleteReminder(r.ID)
+		_, err = l.db.DeleteReminder(r.ID)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+func (l *Later) DeleteReminderWithOwner(owner string, id int64) (bool, error) {
+
+	return l.db.DeleteReminderWithOwner(owner, id)
 }
 
 func (l *Later) InsertReminder(r Reminder) error {
@@ -205,8 +209,28 @@ const deleteReminderSql = `
 DELETE FROM reminders WHERE id = $1;
 `
 
-func (db *DB) DeleteReminder(id int64) error {
+func (db *DB) DeleteReminder(id int64) (bool, error) {
 
-	_, err := db.conn.Exec(deleteReminderSql, id)
-	return err
+	res, err := db.conn.Exec(deleteReminderSql, id)
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return affected == 1, err
+}
+
+const deleteReminderWithOwnerSql = `
+DELETE FROM reminders WHERE owner = $1 and id = $2;
+`
+
+func (db *DB) DeleteReminderWithOwner(owner string, id int64) (bool, error) {
+
+	res, err := db.conn.Exec(deleteReminderWithOwnerSql, owner, id)
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return affected == 1, err
 }

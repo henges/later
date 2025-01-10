@@ -7,6 +7,9 @@ import (
 	"github.com/henges/later/app"
 	"github.com/henges/later/bot"
 	"github.com/henges/later/later"
+	"github.com/olebedev/when"
+	"github.com/olebedev/when/rules/common"
+	"github.com/olebedev/when/rules/en"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"os"
@@ -35,12 +38,25 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Send()
 	}
+	w := setupWhen()
 	cmds := bot.Commands{{
 		BotCommand: gotgbot.BotCommand{
 			Command:     "set",
 			Description: "Set a reminder",
 		},
-		Func: app.NewSetReminderCommand(l).Response,
+		Func: app.NewSetReminderCommand(l, w).Response,
+	}, {
+		BotCommand: gotgbot.BotCommand{
+			Command:     "list",
+			Description: "List reminders",
+		},
+		Func: app.NewListRemindersCommand(l, w).Response,
+	}, {
+		BotCommand: gotgbot.BotCommand{
+			Command:     "del",
+			Description: "Delete reminders",
+		},
+		Func: app.NewDeleteReminderCommand(l, w).Response,
 	}}
 
 	webhookBot, err := bot.NewWebhookBot(&conf, cmds)
@@ -62,4 +78,11 @@ func main() {
 	stop()
 	err = webhookBot.Stop()
 	log.Info().Err(err).Msg("App shutdown")
+}
+
+func setupWhen() *when.Parser {
+	w := when.New(nil)
+	w.Add(en.All...)
+	w.Add(common.All...)
+	return w
 }
