@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -15,9 +16,12 @@ var ErrNoCmd = errors.New("no command found")
 
 func stripCmd(s string) (string, error) {
 
-	split := strings.SplitN(s, " ", 1)
-	if len(split) < 2 || split[0][0] != '/' {
-		return "", fmt.Errorf("for message %s: %w", s, ErrNoCmd)
+	split := strings.SplitN(s, " ", 2)
+	if len(split) < 2 {
+		return "", fmt.Errorf("for message '%s', split len was %d: %w", s, len(split), ErrNoCmd)
+	}
+	if split[0][0] != '/' {
+		return "", fmt.Errorf("for message '%s', split first character wasn't '/': %w", s, ErrNoCmd)
 	}
 	return split[1], nil
 }
@@ -29,14 +33,19 @@ func parseTimeString(s string) (time.Time, error) {
 	return time.Now().Add(10 * time.Second), nil // todo
 }
 
-// /setreminder tomorrow 4:00pm = do the dishes
-func parseSetReminderCommand(user, s string) (later.Reminder, error) {
+type TelegramCallbackData struct {
+	Name    string `json:"name"`
+	ReplyTo int64  `json:"replyTo"`
+}
 
-	s, err := stripCmd(s)
+// /setreminder tomorrow 4:00pm = do the dishes
+func setReminderCommandFromMsgContext(ctx *gobot.Context) (later.Reminder, error) {
+
+	s, err := stripCmd(ctx.EffectiveMessage.Text)
 	if err != nil {
 		return later.Reminder{}, err
 	}
-	split := strings.SplitN(s, "=", 1)
+	split := strings.SplitN(s, "=", 2)
 	if len(split) != 2 {
 		return later.Reminder{}, fmt.Errorf("for message %s, no equals sign: %w", s, ErrInvalidCmd)
 	}
@@ -45,10 +54,19 @@ func parseSetReminderCommand(user, s string) (later.Reminder, error) {
 	if err != nil {
 		return later.Reminder{}, fmt.Errorf("for message %s, couldn't parse time string: %w", s, ErrInvalidCmd)
 	}
+	cbd := TelegramCallbackData{
+		Name:    name,
+		ReplyTo: ctx.EffectiveChat.Id,
+	}
+	cbds, err := json.Marshal(cbd)
+	if err != nil {
+		return later.Reminder{}, err
+	}
+
 	return later.Reminder{
-		Owner:        user,
+		Owner:        ctx.EffectiveSender.User.Username,
 		FireTime:     t,
-		CallbackData: name,
+		CallbackData: string(cbds),
 	}, nil
 }
 
@@ -61,6 +79,8 @@ type SetReminder struct {
 }
 
 func (h *SetReminder) Response(b *gotgbot.Bot, ctx *gobot.Context) error {
+	log.Info().Msg("HELLO!!!")
+
 	message := ctx.EffectiveMessage.Text
 	user := ctx.EffectiveSender.User.Username
 	replyTo := ctx.EffectiveChat.Id
@@ -73,7 +93,7 @@ func (h *SetReminder) Response(b *gotgbot.Bot, ctx *gobot.Context) error {
 	logger.Trace().Msg("Handle update")
 
 	var err error
-	reminder, err := parseSetReminderCommand(user, message)
+	reminder, err := setReminderCommandFromMsgContext(ctx)
 	if err != nil {
 		_, err2 := b.SendMessage(replyTo, err.Error(), nil)
 		if err2 != nil {

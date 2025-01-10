@@ -1,17 +1,22 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/henges/later/app"
 	"github.com/henges/later/bot"
 	"github.com/henges/later/later"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
 
+	zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	file, err := os.ReadFile("./config.json")
 	if err != nil {
 		log.Fatal().Err(err).Send()
@@ -38,6 +43,16 @@ func main() {
 		Func: app.NewSetReminderCommand(l).Response,
 	}}
 
-	bot.NewWebhookBot()
+	webhookBot, err := bot.NewWebhookBot(&conf, cmds)
+	if err != nil {
+		log.Fatal().Err(err).Send()
+	}
+	webhookBot.Start()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	log.Info().Msg("App ready")
 
+	<-ctx.Done()
+	stop()
+	err = webhookBot.Stop()
+	log.Info().Err(err).Msg("App shutdown")
 }

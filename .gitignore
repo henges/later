@@ -1,2 +1,5 @@
 .idea
 config.json
+*.service
+deploy.sh
+build/
