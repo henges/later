@@ -12,9 +12,6 @@ import (
 	"time"
 )
 
-type Settings struct {
-}
-
 type Reminder struct {
 	Owner        string
 	FireTime     time.Time
@@ -34,7 +31,7 @@ type Later struct {
 	stopPolling func()
 }
 
-func NewLater(callback Callback) (*Later, error) {
+func NewLater() (*Later, error) {
 
 	conn, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
@@ -44,13 +41,19 @@ func NewLater(callback Callback) (*Later, error) {
 	if err = db.EnsureMigrated(); err != nil {
 		return nil, err
 	}
-	return &Later{db, callback, nil}, nil
+	return &Later{db, nil, nil}, nil
 }
 
-func (l *Later) StartPoll(dur time.Duration) error {
+func (l *Later) StartPoll(callback Callback, dur time.Duration) error {
 
 	if l.stopPolling != nil {
 		return errors.New("am already polling")
+	}
+	l.cb = callback
+
+	err := l.FireDueReminders(time.Now())
+	if err != nil {
+		log.Err(err).Msg("while firing reminders")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
