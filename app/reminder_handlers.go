@@ -7,6 +7,9 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	gobot "github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/henges/later/later"
+	"github.com/olebedev/when"
+	"github.com/olebedev/when/rules/common"
+	"github.com/olebedev/when/rules/en"
 	"github.com/rs/zerolog/log"
 	"strings"
 	"time"
@@ -28,9 +31,21 @@ func stripCmd(s string) (string, error) {
 
 var ErrInvalidCmd = errors.New("command wasn't valid")
 
-func parseTimeString(s string) (time.Time, error) {
+func (h *SetReminder) parseTimeString(s string) (time.Time, error) {
+	tz, err := time.LoadLocation("Australia/Perth")
+	if err != nil {
+		return time.Time{}, err
+	}
 
-	return time.Now().Add(10 * time.Second), nil // todo
+	parse, err := h.w.Parse(s, time.Now().Truncate(time.Second).In(tz))
+	if err != nil {
+		return time.Time{}, err
+	}
+	if parse == nil {
+		return time.Time{}, errors.New("no match found for text")
+	}
+
+	return parse.Time, nil
 }
 
 type TelegramCallbackData struct {
@@ -39,20 +54,20 @@ type TelegramCallbackData struct {
 }
 
 // /setreminder tomorrow 4:00pm = do the dishes
-func setReminderCommandFromMsgContext(ctx *gobot.Context) (later.Reminder, error) {
+func (h *SetReminder) setReminderCommandFromMsgContext(ctx *gobot.Context) (later.Reminder, TelegramCallbackData, error) {
 
 	s, err := stripCmd(ctx.EffectiveMessage.Text)
 	if err != nil {
-		return later.Reminder{}, err
+		return later.Reminder{}, TelegramCallbackData{}, err
 	}
 	split := strings.SplitN(s, "=", 2)
 	if len(split) != 2 {
-		return later.Reminder{}, fmt.Errorf("for message %s, no equals sign: %w", s, ErrInvalidCmd)
+		return later.Reminder{}, TelegramCallbackData{}, fmt.Errorf("for message %s, no equals sign: %w", s, ErrInvalidCmd)
 	}
 	timeString, name := strings.TrimSpace(split[0]), strings.TrimSpace(split[1])
-	t, err := parseTimeString(timeString)
+	t, err := h.parseTimeString(timeString)
 	if err != nil {
-		return later.Reminder{}, fmt.Errorf("for message %s, couldn't parse time string: %w", s, ErrInvalidCmd)
+		return later.Reminder{}, TelegramCallbackData{}, fmt.Errorf("for message %s, couldn't parse time string: %w", s, ErrInvalidCmd)
 	}
 	cbd := TelegramCallbackData{
 		Name:    name,
@@ -60,22 +75,27 @@ func setReminderCommandFromMsgContext(ctx *gobot.Context) (later.Reminder, error
 	}
 	cbds, err := json.Marshal(cbd)
 	if err != nil {
-		return later.Reminder{}, err
+		return later.Reminder{}, TelegramCallbackData{}, err
 	}
 
 	return later.Reminder{
 		Owner:        ctx.EffectiveSender.User.Username,
 		FireTime:     t,
 		CallbackData: string(cbds),
-	}, nil
+	}, cbd, nil
 }
 
 func NewSetReminderCommand(l *later.Later) *SetReminder {
-	return &SetReminder{l}
+	w := when.New(nil)
+	w.Add(en.All...)
+	w.Add(common.All...)
+
+	return &SetReminder{l, w}
 }
 
 type SetReminder struct {
 	l *later.Later
+	w *when.Parser
 }
 
 func (h *SetReminder) Response(b *gotgbot.Bot, ctx *gobot.Context) error {
@@ -91,7 +111,7 @@ func (h *SetReminder) Response(b *gotgbot.Bot, ctx *gobot.Context) error {
 	logger.Trace().Msg("Handle update")
 
 	var err error
-	reminder, err := setReminderCommandFromMsgContext(ctx)
+	reminder, cbd, err := h.setReminderCommandFromMsgContext(ctx)
 	if err != nil {
 		_, err2 := b.SendMessage(replyTo, err.Error(), nil)
 		if err2 != nil {
@@ -105,7 +125,7 @@ func (h *SetReminder) Response(b *gotgbot.Bot, ctx *gobot.Context) error {
 		logger.Err(err).Send()
 		return err
 	}
-	_, err = b.SendMessage(replyTo, reminder.Owner+" "+reminder.FireTime.String()+" "+reminder.CallbackData, nil)
+	_, err = b.SendMessage(replyTo, fmt.Sprintf("@%s, I'll remind you about _%s_ at %s.", user, cbd.Name, reminder.FireTime.Format(time.RFC3339)), nil)
 	if err != nil {
 		return err
 	}

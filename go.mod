@@ -10,9 +10,12 @@ require (
 )
 
 require (
+	github.com/AlekSi/pointer v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
+	github.com/olebedev/when v1.1.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/tetratelabs/wazero v1.8.2 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 )
