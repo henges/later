@@ -1,0 +1,2 @@
+- allows setting a named reminder
+- 
