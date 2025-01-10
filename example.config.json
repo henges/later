@@ -1,0 +1,7 @@
+{
+  "listenPort": 23315,
+  "host": "https://polluxus.dev",
+  "urlPath": "later",
+  "authToken": "",
+  "sharedSecret": ""
+}

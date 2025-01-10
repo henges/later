@@ -3,7 +3,7 @@ package later_test
 import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	later "later-lib"
+	"github.com/henges/later/later"
 	"testing"
 	"time"
 )
