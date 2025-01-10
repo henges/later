@@ -48,6 +48,13 @@ func main() {
 		log.Fatal().Err(err).Send()
 	}
 	webhookBot.Start()
+	err = app.StartPolling(l, webhookBot.GetBot())
+	if err != nil {
+		log.Fatal().Err(err).Send()
+		return
+	}
+	defer l.StopPoll()
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	log.Info().Msg("App ready")
 

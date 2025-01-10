@@ -110,3 +110,7 @@ func (b *WebhookBot) Stop() error {
 
 	return b.updater.Stop()
 }
+
+func (b *WebhookBot) GetBot() *gotgbot.Bot {
+	return b.b
+}

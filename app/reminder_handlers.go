@@ -79,8 +79,6 @@ type SetReminder struct {
 }
 
 func (h *SetReminder) Response(b *gotgbot.Bot, ctx *gobot.Context) error {
-	log.Info().Msg("HELLO!!!")
-
 	message := ctx.EffectiveMessage.Text
 	user := ctx.EffectiveSender.User.Username
 	replyTo := ctx.EffectiveChat.Id
@@ -112,4 +110,22 @@ func (h *SetReminder) Response(b *gotgbot.Bot, ctx *gobot.Context) error {
 		return err
 	}
 	return nil
+}
+
+func StartPolling(l *later.Later, b *gotgbot.Bot) error {
+
+	return l.StartPoll(func(reminder later.Reminder) {
+
+		var cbd TelegramCallbackData
+		err := json.Unmarshal([]byte(reminder.CallbackData), &cbd)
+		if err != nil {
+			log.Err(err).Str("data", reminder.CallbackData).Msg("invalid callback data")
+			return
+		}
+		_, err = b.SendMessage(cbd.ReplyTo, cbd.Name, nil)
+		if err != nil {
+			log.Err(err).Msg("failed sending message")
+			return
+		}
+	}, time.Second)
 }
