@@ -116,7 +116,7 @@ func formatReminderList(rmds []later.SavedReminder) string {
 		}
 
 		timeWZone := rmd.FireTime.In(tz())
-		sb.WriteString(fmt.Sprintf("%d: __%s__ %s", rmd.ID, tgcd.Name, getTimeDisplayString(referenceTime, timeWZone)))
+		sb.WriteString(fmt.Sprintf("%d: __%s__, %s", rmd.ID, tgcd.Name, getTimeDisplayString(referenceTime, timeWZone)))
 	}
 
 	return sb.String()

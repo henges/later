@@ -31,9 +31,27 @@ type Later struct {
 	stopPolling func()
 }
 
-func NewLater() (*Later, error) {
+type cfg struct {
+	dbName string
+}
 
-	conn, err := sql.Open("sqlite3", ":memory:")
+func WithDBName(name string) Option {
+	return func(c *cfg) {
+		c.dbName = name
+	}
+}
+
+type Option func(*cfg)
+
+func NewLater(opts ...Option) (*Later, error) {
+
+	conf := &cfg{
+		dbName: ":memory:",
+	}
+	for _, o := range opts {
+		o(conf)
+	}
+	conn, err := sql.Open("sqlite3", conf.dbName)
 	if err != nil {
 		return nil, err
 	}

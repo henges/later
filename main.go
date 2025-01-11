@@ -33,7 +33,7 @@ func main() {
 		conf.ListenPort = 23150
 	}
 
-	l, err := later.NewLater()
+	l, err := later.NewLater(later.WithDBName("file:later.db"))
 	if err != nil {
 		log.Fatal().Err(err).Send()
 	}
