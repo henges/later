@@ -21,6 +21,16 @@ func TestGetTimeDisplayString(t *testing.T) {
 			expected: "today at 12:00:01AM",
 		},
 		{
+			name:     "same day no mins or secs",
+			ref:      base.Add(time.Hour),
+			expected: "today at 1AM",
+		},
+		{
+			name:     "same day no secs",
+			ref:      base.Add(time.Hour + time.Minute),
+			expected: "today at 1:01AM",
+		},
+		{
 
 			name:     "same day edge case",
 			now:      base.Add(23*time.Hour + 59*time.Minute + 59*time.Second),

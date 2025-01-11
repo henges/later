@@ -39,7 +39,16 @@ func tz() *time.Location {
 	return defLoc
 }
 
-var replacer = strings.NewReplacer("-", "\\-", "(", "\\(", ")", "\\)", ".", "\\.", "+", "\\+", "<", "\\<", ">", "\\>", "=", "\\=", "!", "\\!")
+var replacer = strings.NewReplacer(
+	"-", "\\-",
+	"(", "\\(",
+	")", "\\)",
+	".", "\\.",
+	"+", "\\+",
+	"<", "\\<",
+	">", "\\>",
+	"=", "\\=",
+	"!", "\\!")
 
 func escapeMarkdownV2(text string) string {
 
@@ -87,18 +96,31 @@ func dayDifference(now time.Time, future time.Time) int {
 }
 
 const kitchenSeconds = "3:04:05PM"
+const kitchenHoursOnly = "3PM"
+
+func kitchenFormat(future time.Time) string {
+
+	if future.Second() == 0 {
+		if future.Minute() == 0 {
+			return future.Format(kitchenHoursOnly)
+		}
+		return future.Format(time.Kitchen)
+	}
+	return future.Format(kitchenSeconds)
+}
 
 func getTimeDisplayString(now, future time.Time) string {
 
 	dayDiff := dayDifference(now, future)
+	clockFmt := kitchenFormat(future)
 	if dayDiff == 0 {
-		return "today at " + future.Format(kitchenSeconds)
+		return "today at " + clockFmt
 	} else if dayDiff == 1 {
-		return "tomorrow at " + future.Format(kitchenSeconds)
+		return "tomorrow at " + clockFmt
 	} else if dayDiff <= 7 {
-		return fmt.Sprintf("in %d days at %s", dayDiff, future.Format(kitchenSeconds))
+		return fmt.Sprintf("in %d days at %s", dayDiff, clockFmt)
 	} else {
-		return fmt.Sprintf("on %s at %s", future.Format(time.DateOnly), future.Format(kitchenSeconds))
+		return fmt.Sprintf("on %s at %s", future.Format(time.DateOnly), clockFmt)
 	}
 }
 
