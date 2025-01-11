@@ -63,8 +63,9 @@ func (h *SetReminder) Response(b *gotgbot.Bot, ctx *gobot.Context) error {
 		logger.Err(err).Send()
 		return err
 	}
-	err = sendMessage(b, replyTo, fmt.Sprintf("@%s, I'll remind you about __%s__ at %s.",
-		user, cbd.Name, reminder.FireTime.Format(time.RFC3339)))
+	now := time.Now().In(tz())
+	err = sendMessage(b, replyTo, fmt.Sprintf("@%s, I'll remind you about __%s__ %s.",
+		user, cbd.Name, getTimeDisplayString(now, reminder.FireTime)))
 	if err != nil {
 		return err
 	}

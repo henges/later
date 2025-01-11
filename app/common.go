@@ -67,8 +67,35 @@ type TelegramCallbackData struct {
 	ReplyTo int64  `json:"replyTo"`
 }
 
+func dayDifference(now time.Time, future time.Time) int {
+
+	// Truncate times to midnight
+	start := now.Truncate(24 * time.Hour)
+	end := future.Truncate(24 * time.Hour)
+
+	// Compute the difference in days
+	return int(end.Sub(start).Hours() / 24)
+}
+
+const kitchenSeconds = "3:04:05PM"
+
+func getTimeDisplayString(now, future time.Time) string {
+
+	dayDiff := dayDifference(now, future)
+	if dayDiff == 0 {
+		return "today at " + future.Format(kitchenSeconds)
+	} else if dayDiff == 1 {
+		return "tomorrow at " + future.Format(kitchenSeconds)
+	} else if dayDiff <= 7 {
+		return fmt.Sprintf("in %d days at %s", dayDiff, future.Format(kitchenSeconds))
+	} else {
+		return fmt.Sprintf("on %s at %s", future.Format(time.DateOnly), future.Format(kitchenSeconds))
+	}
+}
+
 func formatReminderList(rmds []later.SavedReminder) string {
 
+	referenceTime := time.Now().In(tz())
 	var sb strings.Builder
 	for i, rmd := range rmds {
 		if i > 0 {
@@ -79,7 +106,8 @@ func formatReminderList(rmds []later.SavedReminder) string {
 			continue
 		}
 
-		sb.WriteString(fmt.Sprintf("%d: __%s__ at %s", rmd.ID, tgcd.Name, rmd.FireTime.In(tz()).Format(time.RFC3339)))
+		timeWZone := rmd.FireTime.In(tz())
+		sb.WriteString(fmt.Sprintf("%d: __%s__ %s", rmd.ID, tgcd.Name, getTimeDisplayString(referenceTime, timeWZone)))
 	}
 
 	return sb.String()
