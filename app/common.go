@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-var replacer = strings.NewReplacer("-", "\\-", "(", "\\(", ")", "\\)", ".", "\\.", "+", "\\+")
-
 var defLoc *time.Location
 
 var locOnce sync.Once
@@ -31,6 +29,8 @@ func tz() *time.Location {
 	}
 	return defLoc
 }
+
+var replacer = strings.NewReplacer("-", "\\-", "(", "\\(", ")", "\\)", ".", "\\.", "+", "\\+", "<", "\\<", ">", "\\>", "=", "\\=")
 
 func escapeMarkdownV2(text string) string {
 

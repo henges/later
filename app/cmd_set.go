@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	gobot "github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/henges/later/bot"
 	"github.com/henges/later/later"
 	"github.com/olebedev/when"
 	"github.com/rs/zerolog/log"
@@ -13,8 +14,21 @@ import (
 	"time"
 )
 
-func NewSetReminderCommand(l *later.Later, w *when.Parser) *SetReminder {
-	return &SetReminder{l, w}
+func NewSetReminderCommand(l *later.Later, w *when.Parser) bot.Command {
+	v := &SetReminder{l, w}
+
+	return bot.Command{
+		BotCommand: gotgbot.BotCommand{
+			Command:     "set",
+			Description: "<time string> = <description> - Set a reminder",
+		},
+		LongDescription: `
+Set a reminder that will fire at the time specified by the given time string.
+You can use date-time values like '2025-01-11' and '2025-01-11T11:39:00', as
+well as conversational values like 'tomorrow', 'in three days', etc.
+		`,
+		Func: v.Response,
+	}
 }
 
 type SetReminder struct {

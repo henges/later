@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/henges/later/app"
 	"github.com/henges/later/bot"
 	"github.com/henges/later/later"
@@ -39,26 +38,12 @@ func main() {
 		log.Fatal().Err(err).Send()
 	}
 	w := setupWhen()
-	cmds := bot.Commands{{
-		BotCommand: gotgbot.BotCommand{
-			Command:     "set",
-			Description: "Set a reminder",
-		},
-		Func: app.NewSetReminderCommand(l, w).Response,
-	}, {
-		BotCommand: gotgbot.BotCommand{
-			Command:     "list",
-			Description: "List reminders",
-		},
-		Func: app.NewListRemindersCommand(l, w).Response,
-	}, {
-		BotCommand: gotgbot.BotCommand{
-			Command:     "del",
-			Description: "Delete reminders",
-		},
-		Func: app.NewDeleteReminderCommand(l, w).Response,
-	}}
-
+	cmds := bot.Commands{
+		app.NewSetReminderCommand(l, w),
+		app.NewListRemindersCommand(l, w),
+		app.NewDeleteReminderCommand(l, w),
+	}
+	cmds = append(cmds, app.NewHelpCommand(cmds))
 	webhookBot, err := bot.NewWebhookBot(&conf, cmds)
 	if err != nil {
 		log.Fatal().Err(err).Send()

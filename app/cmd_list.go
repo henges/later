@@ -4,13 +4,25 @@ import (
 	"fmt"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	gobot "github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/henges/later/bot"
 	"github.com/henges/later/later"
 	"github.com/olebedev/when"
 	"github.com/rs/zerolog/log"
 )
 
-func NewListRemindersCommand(l *later.Later, w *when.Parser) *ListReminders {
-	return &ListReminders{l, w}
+func NewListRemindersCommand(l *later.Later, w *when.Parser) bot.Command {
+	v := &ListReminders{l, w}
+	return bot.Command{
+		BotCommand: gotgbot.BotCommand{
+			Command:     "list",
+			Description: "List reminders",
+		},
+		LongDescription: `
+List all reminders you have registered. The ID associated with each returned
+reminder can be used to delete a reminder if desired.
+		`,
+		Func: v.Response,
+	}
 }
 
 type ListReminders struct {

@@ -4,14 +4,26 @@ import (
 	"fmt"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	gobot "github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/henges/later/bot"
 	"github.com/henges/later/later"
 	"github.com/olebedev/when"
 	"github.com/rs/zerolog/log"
 	"strconv"
 )
 
-func NewDeleteReminderCommand(l *later.Later, w *when.Parser) *DeleteReminder {
-	return &DeleteReminder{l, w}
+func NewDeleteReminderCommand(l *later.Later, w *when.Parser) bot.Command {
+	v := &DeleteReminder{l, w}
+	return bot.Command{
+		BotCommand: gotgbot.BotCommand{
+			Command:     "del",
+			Description: "<id> - Delete a reminder",
+		},
+		LongDescription: `
+Delete a reminder. The <id> value provided should correspond with a value
+returned by /list.
+		`,
+		Func: v.Response,
+	}
 }
 
 type DeleteReminder struct {

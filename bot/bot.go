@@ -26,7 +26,8 @@ type Config struct {
 
 type Command struct {
 	gotgbot.BotCommand
-	Func handlers.Response
+	LongDescription string
+	Func            handlers.Response
 }
 
 func NewWebhookBot(c *Config, cmds Commands) (*WebhookBot, error) {
