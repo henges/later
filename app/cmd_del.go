@@ -70,7 +70,7 @@ func (h *DeleteReminder) Response(b *gotgbot.Bot, ctx *gobot.Context) error {
 		return err
 	}
 
-	resp := fmt.Sprintf("@%s, I successfully deleted reminder with ID %d", user, id)
+	resp := fmt.Sprintf("@%s, I successfully deleted the reminder with ID %d. (:", user, id)
 	err = sendMessage(b, replyTo, resp)
 	if err != nil {
 		return err

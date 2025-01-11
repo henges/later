@@ -12,6 +12,15 @@ import (
 	"time"
 )
 
+var botDescription = makeSingleLine(`
+This bot allows you to set reminders. Use /set to give it a time and a message, and it'll
+message this chat at that time with your message.
+`)
+
+func makeSingleLine(s string) string {
+	return strings.ReplaceAll(strings.TrimSpace(s), "\n", " ")
+}
+
 var defLoc *time.Location
 
 var locOnce sync.Once
@@ -30,7 +39,7 @@ func tz() *time.Location {
 	return defLoc
 }
 
-var replacer = strings.NewReplacer("-", "\\-", "(", "\\(", ")", "\\)", ".", "\\.", "+", "\\+", "<", "\\<", ">", "\\>", "=", "\\=")
+var replacer = strings.NewReplacer("-", "\\-", "(", "\\(", ")", "\\)", ".", "\\.", "+", "\\+", "<", "\\<", ">", "\\>", "=", "\\=", "!", "\\!")
 
 func escapeMarkdownV2(text string) string {
 

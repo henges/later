@@ -11,12 +11,12 @@ func formatHelpMessage(cmds []bot.Command) string {
 
 	var sb strings.Builder
 	for _, cmd := range cmds {
-		text := "*/" + cmd.Command + "*" + " " + cmd.Description + "\n" + strings.ReplaceAll(strings.TrimSpace(cmd.LongDescription), "\n", " ") + "\n\n"
+		text := "*/" + cmd.Command + "*" + " " + cmd.Description + "\n" + makeSingleLine(cmd.LongDescription) + "\n\n"
 		sb.WriteString(text)
 	}
 
 	cmdDescriptions := strings.TrimSpace(sb.String())
-	return cmdDescriptions
+	return botDescription + " These are the available commands:\n\n" + cmdDescriptions
 }
 
 func NewHelpCommand(cmds []bot.Command) bot.Command {

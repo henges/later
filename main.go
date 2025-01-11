@@ -44,6 +44,7 @@ func main() {
 		app.NewDeleteReminderCommand(l, w),
 	}
 	cmds = append(cmds, app.NewHelpCommand(cmds))
+	cmds = append(cmds, app.NewStartCommand())
 	webhookBot, err := bot.NewWebhookBot(&conf, cmds)
 	if err != nil {
 		log.Fatal().Err(err).Send()
