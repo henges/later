@@ -122,6 +122,11 @@ func formatReminderList(rmds []later.SavedReminder) string {
 	return sb.String()
 }
 
+func getReminderMessage(owner, name string) string {
+
+	return fmt.Sprintf("@%s, you asked me to remind you about this at this time:\n%s", owner, name)
+}
+
 func StartPolling(l *later.Later, b *gotgbot.Bot) error {
 
 	return l.StartPoll(func(reminder later.Reminder) {
@@ -132,7 +137,7 @@ func StartPolling(l *later.Later, b *gotgbot.Bot) error {
 			log.Err(err).Str("data", reminder.CallbackData).Msg("invalid callback data")
 			return
 		}
-		_, err = b.SendMessage(cbd.ReplyTo, cbd.Name, nil)
+		err = sendMessage(b, cbd.ReplyTo, getReminderMessage(reminder.Owner, cbd.Name))
 		if err != nil {
 			log.Err(err).Msg("failed sending message")
 			return
